@@ -6,7 +6,7 @@ import {
 import {ErrorWithDetail} from './exceptions.ts';
 
 import {printAndExit} from './cli.ts';
-import {type Fn} from './types.ts';
+import {type Fn} from './types.d.ts';
 
 Deno.test('printAndExit', async (ctx) => {
   type MethodSubstitutions = Map<string, [original: Fn, substitute: Fn]>;
