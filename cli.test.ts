@@ -2,8 +2,8 @@ import {
   assert,
   assertEquals,
   assertThrows,
-  ErrorWithDetail,
 } from './test_deps.ts';
+import {ErrorWithDetail} from './exceptions.ts';
 
 import {printAndExit} from './cli.ts';
 import {type Fn} from './types.ts';
