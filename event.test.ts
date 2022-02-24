@@ -1,5 +1,5 @@
-import {assertStrictEquals} from './test_deps.ts';
-import {createEvent} from './event.ts';
+import {assertStrictEquals, unimplemented} from './test_deps.ts';
+import {createEvent, CustomEventTarget} from './event.ts';
 
 Deno.test('createEvent', async (ctx) => {
   await ctx.step('created event has correct property values', () => {
@@ -14,4 +14,9 @@ Deno.test('createEvent', async (ctx) => {
     assertStrictEquals(ev.type, eventType);
     assertStrictEquals(ev.detail, eventDetail);
   });
+});
+
+Deno.test('CustomEventTarget', async (ctx) => {
+  unimplemented();
+  await ctx.step('', () => {});
 });
