@@ -26,7 +26,6 @@ export type CustomEventCallback<Type extends string = string, Detail = unknown> 
 type CustomEventDetailParameters<
   T extends Record<string, unknown>,
   K extends keyof T,
-// > = ConditionallyOptionalParameter<T[K]>; // 🤔
 > = (
   undefined extends T[K] ? [payload?: T[K]]
   : T[K] extends never ? []
