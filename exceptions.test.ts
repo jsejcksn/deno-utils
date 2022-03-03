@@ -64,11 +64,11 @@ Deno.test('getError', async (ctx) => {
   });
 
   await ctx.step(
-    'sets non-Error argument to the "cause" property of the crated Error',
+    'sets non-Error argument to the "detail" property of the created Error',
     () => {
       const msg = 'msg';
       const value = {msg};
-      assertStrictEquals(getError(value).cause, value);
+      assertStrictEquals((getError(value) as ErrorWithDetail).detail, value);
     },
   );
 });
