@@ -28,9 +28,10 @@ Deno.test('CustomEventTarget', async (ctx) => {
     x: never;
   };
 
+  type CountMap = { adjustCount: 'increment' | 'decrement'; };
+
   await ctx.step('dispatches events', () => {
-    type M = { adjustCount: 'increment' | 'decrement'; };
-    const target = new CustomEventTarget<M>();
+    const target = new CustomEventTarget<CountMap>();
     let count = 0;
 
     target.addEventListener('adjustCount', ({detail}) => {
@@ -48,12 +49,11 @@ Deno.test('CustomEventTarget', async (ctx) => {
   });
 
   await ctx.step('correctly implements "once" option', () => {
-    type M = { adjustCount: 'increment' | 'decrement'; };
-    const target = new CustomEventTarget<M>();
+    const target = new CustomEventTarget<CountMap>();
     let count = 0;
 
-    const cb = ({detail}: CustomEvent<M['adjustCount']>) => {
-      count += detail === 'increment' ? 1 : -1;
+    const cb = (ev: CustomEvent<CountMap['adjustCount']>) => {
+      count += ev.detail === 'increment' ? 1 : -1;
     };
 
     target.addEventListener('adjustCount', cb, {once: true});
@@ -67,8 +67,7 @@ Deno.test('CustomEventTarget', async (ctx) => {
   });
 
   await ctx.step('"subscribe" method returns "unsubscribe" function', () => {
-    type M = { adjustCount: 'increment' | 'decrement'; };
-    const target = new CustomEventTarget<M>();
+    const target = new CustomEventTarget<CountMap>();
     let count = 0;
 
     const unsubscribe = target.subscribe('adjustCount', payload => {
