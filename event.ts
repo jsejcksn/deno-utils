@@ -1,8 +1,16 @@
-import type {Fn, Values} from './types.d.ts';
+import type {Fn} from './types.d.ts';
 
 export type TypedCustomEvent<Type extends string, Detail = unknown> =
   CustomEvent<Detail> & {type: Type};
 
+export function createEvent <Type extends string>(
+  type: Type,
+): TypedCustomEvent<Type, undefined>;
+export function createEvent <Type extends string, Detail>(
+  type: Type,
+  detail: Detail,
+  init?: Omit<CustomEventInit, 'detail'>,
+): TypedCustomEvent<Type, Detail>;
 export function createEvent <Type extends string, Detail>(
   type: Type,
   detail?: Detail,
@@ -15,18 +23,22 @@ export function createEvent <Type extends string, Detail>(
 export type CustomEventCallback<Type extends string = string, Detail = unknown> =
   Fn<[event: TypedCustomEvent<Type, Detail>], void>;
 
-// deno-lint-ignore no-explicit-any
-export type EventCallbackFromCustomEvent<T extends TypedCustomEvent<string, any>> =
-  Fn<[event: T], void>;
+type CustomEventDetailParameters<
+  T extends Record<string, unknown>,
+  K extends keyof T,
+// > = ConditionallyOptionalParameter<T[K]>; // 🤔
+> = (
+  undefined extends T[K] ? [payload?: T[K]]
+  : T[K] extends never ? []
+  : [payload: T[K]]
+);
 
-export type CustomEventMap = Record<string, CustomEvent>;
-
-export class CustomEventTarget<T extends CustomEventMap = Record<never, never>> extends EventTarget {
+export class CustomEventTarget<EventPayloadMap extends Record<string, unknown> = Record<never, never>> extends EventTarget {
   // deno-lint-ignore ban-ts-comment
   // @ts-ignore
-  addEventListener <K extends keyof T & string>(
+  addEventListener <K extends keyof EventPayloadMap & string>(
     type: K,
-    callback: EventCallbackFromCustomEvent<T[K]>,
+    callback: CustomEventCallback<K, EventPayloadMap[K]>,
     options?: Parameters<EventTarget['addEventListener']>[2],
   ): void {
     return super.addEventListener(
@@ -36,28 +48,24 @@ export class CustomEventTarget<T extends CustomEventMap = Record<never, never>> 
     );
   }
 
-  dispatch <K extends keyof T & string>(
+  dispatch <K extends keyof EventPayloadMap & string>(
     type: K,
-    ...[detail]: (
-      unknown extends T[K]['detail'] ? [detail?: unknown]
-      : T[K]['detail'] extends undefined ? [detail?: undefined]
-      : T[K]['detail'] extends never ? []
-      : [detail: T[K]['detail']]
-    )
+    ...[detail]: CustomEventDetailParameters<EventPayloadMap, K>
   ): void {
-    const event = createEvent(type, detail) as unknown as Values<T>;
-    this.dispatchEvent(event);
+    this.dispatchEvent(new CustomEvent(type, {detail}) as CustomEvent<EventPayloadMap[K]>);
   }
 
-  dispatchEvent <E extends Values<T>>(event: E): boolean {
+  dispatchEvent <K extends keyof EventPayloadMap & string>(event: TypedCustomEvent<K, EventPayloadMap[K]>): boolean {
     return super.dispatchEvent(event);
   }
 
+  publish = this.dispatch;
+
   // deno-lint-ignore ban-ts-comment
   // @ts-ignore
-  removeEventListener <K extends keyof T & string>(
+  removeEventListener <K extends keyof EventPayloadMap & string>(
     type: K,
-    callback: EventCallbackFromCustomEvent<T[K]>,
+    callback: CustomEventCallback<K, EventPayloadMap[K]>,
     options?: Parameters<EventTarget['removeEventListener']>[2],
   ): void {
     return super.removeEventListener(
@@ -65,5 +73,14 @@ export class CustomEventTarget<T extends CustomEventMap = Record<never, never>> 
       callback as Extract<Parameters<EventTarget['removeEventListener']>[1], Fn>,
       options,
     );
+  }
+
+  subscribe <K extends keyof EventPayloadMap & string>(
+    type: K,
+    callback: Fn<CustomEventDetailParameters<EventPayloadMap, K>, void>,
+  ): Fn<[never], void> {
+    const fn: CustomEventCallback<K, EventPayloadMap[K]> = ({detail}) => (callback as Fn<[EventPayloadMap[K]], void>)(detail); // 🤔
+    this.addEventListener(type, fn);
+    return () => this.removeEventListener(type, fn);
   }
 }

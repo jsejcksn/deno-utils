@@ -17,6 +17,38 @@ Deno.test('createEvent', async (ctx) => {
 });
 
 Deno.test('CustomEventTarget', async (ctx) => {
-  unimplemented();
-  await ctx.step('', () => {});
+  type EventPayloadMap = {
+    a: unknown;
+    b: undefined;
+    c?: undefined;
+    d: string;
+    e?: number;
+    f: { msg: string; };
+    g?: { msg: string; };
+    x: never;
+    adjustCount: 'increment' | 'decrement';
+  };
+
+  await ctx.step('emits events', () => {
+    const target = new CustomEventTarget<EventPayloadMap>();
+    let count = 0;
+
+    target.addEventListener('adjustCount', ({detail}) => {
+      if (detail === 'increment') count += 1;
+      if (detail === 'decrement') count -= 1;
+    });
+
+    const incrementEvent = createEvent('adjustCount', 'increment' as const);
+    target.dispatchEvent(incrementEvent);
+    target.dispatchEvent(incrementEvent);
+    target.dispatch('adjustCount', 'decrement');
+    target.dispatch('adjustCount', 'decrement');
+    target.dispatch('adjustCount', 'increment');
+
+    assertStrictEquals(count, 1);
+  });
+
+  await ctx.step('passes unwritten tests', () => {
+    unimplemented();
+  });
 });
