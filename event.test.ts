@@ -26,16 +26,15 @@ Deno.test('CustomEventTarget', async (ctx) => {
     f: { msg: string; };
     g?: { msg: string; };
     x: never;
-    adjustCount: 'increment' | 'decrement';
   };
 
-  await ctx.step('emits events', () => {
-    const target = new CustomEventTarget<EventPayloadMap>();
+  await ctx.step('dispatches events', () => {
+    type M = { adjustCount: 'increment' | 'decrement'; };
+    const target = new CustomEventTarget<M>();
     let count = 0;
 
     target.addEventListener('adjustCount', ({detail}) => {
-      if (detail === 'increment') count += 1;
-      if (detail === 'decrement') count -= 1;
+      count += detail === 'increment' ? 1 : -1;
     });
 
     const incrementEvent = createEvent('adjustCount', 'increment' as const);
@@ -45,6 +44,42 @@ Deno.test('CustomEventTarget', async (ctx) => {
     target.dispatch('adjustCount', 'decrement');
     target.dispatch('adjustCount', 'increment');
 
+    assertStrictEquals(count, 1);
+  });
+
+  await ctx.step('correctly implements "once" option', () => {
+    type M = { adjustCount: 'increment' | 'decrement'; };
+    const target = new CustomEventTarget<M>();
+    let count = 0;
+
+    const cb = ({detail}: CustomEvent<M['adjustCount']>) => {
+      count += detail === 'increment' ? 1 : -1;
+    };
+
+    target.addEventListener('adjustCount', cb, {once: true});
+    const incrementEvent = createEvent('adjustCount', 'increment' as const);
+
+    assertStrictEquals(count, 0);
+    target.dispatchEvent(incrementEvent);
+    assertStrictEquals(count, 1);
+    target.dispatchEvent(incrementEvent);
+    assertStrictEquals(count, 1);
+  });
+
+  await ctx.step('"subscribe" method returns "unsubscribe" function', () => {
+    type M = { adjustCount: 'increment' | 'decrement'; };
+    const target = new CustomEventTarget<M>();
+    let count = 0;
+
+    const unsubscribe = target.subscribe('adjustCount', payload => {
+      count += payload === 'increment' ? 1 : -1;
+      unsubscribe();
+    });
+
+    assertStrictEquals(count, 0);
+    target.publish('adjustCount', 'increment');
+    assertStrictEquals(count, 1);
+    target.publish('adjustCount', 'increment');
     assertStrictEquals(count, 1);
   });
 

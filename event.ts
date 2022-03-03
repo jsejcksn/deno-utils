@@ -77,7 +77,7 @@ export class CustomEventTarget<EventPayloadMap extends Record<string, unknown> =
   subscribe <K extends keyof EventPayloadMap & string>(
     type: K,
     callback: Fn<CustomEventDetailParameters<EventPayloadMap, K>, void>,
-  ): Fn<[never], void> {
+  ): Fn<[], void> {
     const fn: CustomEventCallback<K, EventPayloadMap[K]> = ({detail}) => (callback as Fn<[EventPayloadMap[K]], void>)(detail); // 🤔
     this.addEventListener(type, fn);
     return () => this.removeEventListener(type, fn);
