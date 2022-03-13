@@ -34,7 +34,7 @@ type CustomEventDetailParameters<
 
 export class CustomEventTarget<EventPayloadMap extends Record<string, unknown> = Record<never, never>> extends EventTarget {
   // deno-lint-ignore ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error
   addEventListener <K extends keyof EventPayloadMap & string>(
     type: K,
     callback: CustomEventCallback<K, EventPayloadMap[K]>,
@@ -61,7 +61,7 @@ export class CustomEventTarget<EventPayloadMap extends Record<string, unknown> =
   publish = this.dispatch;
 
   // deno-lint-ignore ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error
   removeEventListener <K extends keyof EventPayloadMap & string>(
     type: K,
     callback: CustomEventCallback<K, EventPayloadMap[K]>,
