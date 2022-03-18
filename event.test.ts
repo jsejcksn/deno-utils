@@ -82,7 +82,7 @@ Deno.test('CustomEventTarget', async (ctx) => {
     assertStrictEquals(count, 1);
   });
 
-  await ctx.step('passes unwritten tests', () => {
+  await ctx.step('test coverage is adequate', () => {
     unimplemented();
   });
 });
